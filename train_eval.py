@@ -22,7 +22,8 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import confusion_matrix
-
+import pandas as pd
+import sklearn 
 
 # In[2]:
 
@@ -34,8 +35,11 @@ import models as m
 # In[6]:
 
 
-def calc_metrics_v1(net,loader,all_labels,all_predicted,show=True) : 
+def calc_metrics_v1(net,loader,show=True) : 
 
+    all_labels=[]
+    all_predicted=[]
+    
     for i, data in enumerate(loader, 0):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
@@ -48,13 +52,13 @@ def calc_metrics_v1(net,loader,all_labels,all_predicted,show=True) :
     f1s=f1_score(all_labels,all_predicted,average='weighted')
     prec=precision_score(all_labels,all_predicted,average='weighted')
     rec=recall_score(all_labels,all_predicted,average='weighted')
-    cf_m=confusion_matrix(all_labels,all_predicted,normalize='true')
+    cf_m=pd.DataFrame(sklearn.metrics.confusion_matrix(all_labels, all_predicted,normalize='true'))
     
     if show ==True : 
         print('Validation set')
-        print("f1_score",f1s)
-        print("precision",prec)
-        print("recall",rec)
+        print("f1_score ",f1s)
+        print("precision ",prec)
+        print("recall ",rec)
         print("confusion matrix\n", cf_m)
         
     return f1s,prec,rec,cf_m
@@ -88,10 +92,10 @@ def train_v1(net,criterion,optimizer,epochs,train_loader,valid_loader):
             loss.backward()
             optimizer.step()
 
-            all_labels.extend(np.array(labels))
+            #all_labels.extend(np.array(labels))
 
             _, predicted = torch.max(outputs.data, 1)
-            all_predicted.extend(np.array(predicted))
+            #all_predicted.extend(np.array(predicted))
 
             running_loss += loss.item()
             if n_batch % 2000 == 1999:    # print every 10 mini-batches
@@ -103,7 +107,7 @@ def train_v1(net,criterion,optimizer,epochs,train_loader,valid_loader):
                 labels=np.array(labels)
                 #---------------------------------
                 all_losses.append(running_loss / n_batch)
-                f1 = calc_metrics_v1(net,valid_loader,all_labels,all_predicted,False)[0]
+                f1 = calc_metrics_v1(net,valid_loader,False)[0]
                 all_f1scores.append(f1)
                 print('[%2d, %2d] loss: %.3f f1_score on validation set : %.3f' %
                       (epoch + 1, n_batch + 1, running_loss / n_batch,f1))
