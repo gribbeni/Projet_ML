@@ -22,6 +22,7 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import roc_auc_score
 import pandas as pd
 import sklearn 
 
@@ -53,6 +54,7 @@ def calc_metrics_v1(net,loader,show=True) :
     prec=precision_score(all_labels,all_predicted,average='weighted')
     rec=recall_score(all_labels,all_predicted,average='weighted')
     cf_m=pd.DataFrame(sklearn.metrics.confusion_matrix(all_labels, all_predicted,normalize='true'))
+    roc_aucc=roc_auc_score(all_labels,all_predicted)
     
     if show ==True : 
         print('Validation set')
@@ -61,7 +63,7 @@ def calc_metrics_v1(net,loader,show=True) :
         print("recall ",rec)
         print("confusion matrix\n", cf_m)
         
-    return f1s,prec,rec,cf_m
+    return f1s,prec,rec,cf_m,roc_aucc
 
 
 # In[9]:
@@ -74,6 +76,7 @@ def train_v1(net,criterion,optimizer,epochs,train_loader,valid_loader):
     all_losses=[]
     all_accuracies=[]
     all_f1scores=[]
+    all_roc_auc=[]
     
     for epoch in range(epochs):  # loop over the dataset multiple times
 
@@ -107,15 +110,16 @@ def train_v1(net,criterion,optimizer,epochs,train_loader,valid_loader):
                 labels=np.array(labels)
                 #---------------------------------
                 all_losses.append(running_loss / n_batch)
-                f1 = calc_metrics_v1(net,valid_loader,False)[0]
+                f1,_,_,_,roc = calc_metrics_v1(net,valid_loader,False)#[0]
                 all_f1scores.append(f1)
+                all_roc_auc.append(roc)
                 print('[%2d, %2d] loss: %.3f f1_score on validation set : %.3f' %
                       (epoch + 1, n_batch + 1, running_loss / n_batch,f1))
 
                 running_loss = 0.0
             
     
-    return all_labels,all_predicted,all_losses,all_accuracies,all_f1scores
+    return all_labels,all_predicted,all_losses,all_accuracies,all_f1scores,all_roc_auc
 
 
 # In[ ]:
