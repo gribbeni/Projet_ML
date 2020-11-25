@@ -1,7 +1,7 @@
 # import the necessary packages
 from ImageClassification import imutils 
 
-def pyramid(image, scale=1.5, minSize=(30, 30)):
+def pyramid(image, scale=1.5, minSize=(36, 36)):
 	# yield the original image
 	yield image
 

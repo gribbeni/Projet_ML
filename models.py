@@ -57,7 +57,7 @@ class BaseNet_v2(nn.Module):
         self.conv1 = nn.Conv2d(1, 6, 5)
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 6 * 6, 120)
-        self.fc2 = nn.Linear(120, 10)
+        self.fc2 = nn.Linear(120, 2)
 
     def forward(self, x):
         # Max pooling over a (2, 2) window
@@ -78,8 +78,37 @@ class BaseNet_v2(nn.Module):
 
 
 # In[ ]:
+class BaseNet_v3(nn.Module):
+    def __init__(self):
+        super(BaseNet_v3, self).__init__()
+        # convolutional layer
+        self.conv1 = nn.Conv2d(1, 32, 5)
+        # max pooling layer
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(32, 20, 3)
+        self.dropout = nn.Dropout(0.2)
+        self.fc1 = nn.Linear(4500, 256)
+        self.fc2 = nn.Linear(256, 84)
+        self.fc3 = nn.Linear(84, 2)
+        self.softmax = nn.LogSoftmax(dim=1)
+        
+    def forward(self, x):
+        # add sequence of convolutional and max pooling layers
+        x = F.relu(self.conv1(x))
+        x = self.pool(F.relu(self.conv2(x)))
+        #x = self.pool(F.relu(self.conv2(x)))
+        x = self.dropout(x)
+        x = x.view(-1, self.num_flat_features(x))
+        x = F.relu(self.fc1(x))
+        x = self.dropout(F.relu(self.fc2(x)))
+        x = self.softmax(self.fc3(x))
+        return x
 
-
+    def num_flat_features(self, x):
+        size = x.size()[1:] # all dimensions except the batch dimension
+        num_features = reduce(lambda r,s: r*s,size)
+        #print(num_features)
+        return num_features
 
 
 

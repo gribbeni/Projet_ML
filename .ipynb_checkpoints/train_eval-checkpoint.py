@@ -36,19 +36,20 @@ import models as m
 # In[6]:
 
 
-def calc_metrics_v1(net,loader,show=True) : 
+def calc_metrics_v1(net,loader,show,device) : 
 
     all_labels=[]
     all_predicted=[]
     
     for i, data in enumerate(loader, 0):
             # get the inputs; data is a list of [inputs, labels]
-            inputs, labels = data
+            inputs, labels = data[0].to(device), data[1].to(device)
+            #data
             outputs = net(inputs)
             y_pred_softmax = torch.log_softmax(outputs, dim = 1)
             _, y_pred_tags = torch.max(y_pred_softmax, dim = 1)
-            all_predicted.extend(np.array(y_pred_tags))
-            all_labels.extend(np.array(labels))
+            all_predicted.extend(np.array(y_pred_tags.cpu()))
+            all_labels.extend(np.array(labels.cpu()))
     
     f1s=f1_score(all_labels,all_predicted,average='weighted')
     prec=precision_score(all_labels,all_predicted,average='weighted')
@@ -69,7 +70,7 @@ def calc_metrics_v1(net,loader,show=True) :
 # In[9]:
 
 
-def train_v1(net,criterion,optimizer,epochs,train_loader,valid_loader):
+def train_v1(net,criterion,optimizer,epochs,train_loader,valid_loader,device):
     
     all_labels=[]
     all_predicted=[]
@@ -77,13 +78,16 @@ def train_v1(net,criterion,optimizer,epochs,train_loader,valid_loader):
     all_accuracies=[]
     all_f1scores=[]
     all_roc_auc=[]
+    bestf1=0
+    best_params=net.state_dict()
     
     for epoch in range(epochs):  # loop over the dataset multiple times
 
         running_loss = 0.0
         for n_batch,batch in enumerate(train_loader) : 
             # get the inputs; data is a list of [inputs, labels]
-            inputs, labels = batch
+            inputs, labels = batch[0].to(device), batch[1].to(device)
+            #batch
 
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -106,11 +110,15 @@ def train_v1(net,criterion,optimizer,epochs,train_loader,valid_loader):
                 #peut-être ça ne sert plus---------
                 y_pred_softmax = torch.log_softmax(outputs, dim = 1)
                 _, y_pred_tags = torch.max(y_pred_softmax, dim = 1)
-                outputs=np.array(y_pred_tags)
-                labels=np.array(labels)
+                outputs=np.array(y_pred_tags.cpu())
+                labels=np.array(labels.cpu())
                 #---------------------------------
                 all_losses.append(running_loss / n_batch)
-                f1,_,_,_,roc = calc_metrics_v1(net,valid_loader,False)#[0]
+                f1,_,_,_,roc = calc_metrics_v1(net,valid_loader,False,device)#[0]
+                
+                if f1 > bestf1 : 
+                    best_params=net.state_dict()
+                    
                 all_f1scores.append(f1)
                 all_roc_auc.append(roc)
                 print('[%2d, %2d] loss: %.3f f1_score on validation set : %.3f' %
@@ -119,7 +127,7 @@ def train_v1(net,criterion,optimizer,epochs,train_loader,valid_loader):
                 running_loss = 0.0
             
     
-    return all_labels,all_predicted,all_losses,all_accuracies,all_f1scores,all_roc_auc
+    return all_losses,all_accuracies,all_f1scores,all_roc_auc,best_params
 
 
 # In[ ]:
