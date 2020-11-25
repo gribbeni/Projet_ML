@@ -116,7 +116,8 @@ def train_v1(net,criterion,optimizer,epochs,train_loader,valid_loader,device):
                 all_losses.append(running_loss / n_batch)
                 f1,_,_,_,roc = calc_metrics_v1(net,valid_loader,False,device)#[0]
                 
-                if f1 > bestf1 : 
+                if f1 > bestf1 :
+                    bestf1=f1
                     best_params=net.state_dict()
                     
                 all_f1scores.append(f1)
