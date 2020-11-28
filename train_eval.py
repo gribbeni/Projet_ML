@@ -25,6 +25,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import roc_auc_score
 import pandas as pd
 import sklearn 
+from tqdm import tqdm
 
 # In[2]:
 
@@ -105,7 +106,7 @@ def train_v1(net,criterion,optimizer,epochs,train_loader,valid_loader,device):
             #all_predicted.extend(np.array(predicted))
 
             running_loss += loss.item()
-            if n_batch % 2000 == 1999:    # print every 10 mini-batches
+            if n_batch % 2000 == 1999:    # print every 2000 mini-batches so 1 epoch
 
                 #peut-être ça ne sert plus---------
                 y_pred_softmax = torch.log_softmax(outputs, dim = 1)
