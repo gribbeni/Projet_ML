@@ -151,48 +151,28 @@ class BaseNet_v4(nn.Module):
         #print(num_features)
         return num_features
 
-
-class LeNet(nn.Module):
+    
+class BaseNet_v5(nn.Module):
     def __init__(self):
-        super(LeNet, self).__init__()
-        self.relu = nn.ReLU()
-        self.pool = nn.AvgPool2d(kernel_size=(2, 2), stride=(2, 2))
-        self.conv1 = nn.Conv2d(
-            in_channels=1,
-            out_channels=6,
-            kernel_size=(5, 5),
-            stride=(1, 1),
-            padding=(0, 0),
-        )
-        self.conv2 = nn.Conv2d(
-            in_channels=6,
-            out_channels=16,
-            kernel_size=(5, 5),
-            stride=(1, 1),
-            padding=(0, 0),
-        )
-        self.conv3 = nn.Conv2d(
-            in_channels=16,
-            out_channels=120,
-            kernel_size=(5, 5),
-            stride=(1, 1),
-            padding=(0, 0),
-        )
-        self.linear1 = nn.Linear(480, 84)
-        self.linear2 = nn.Linear(84, 2)
+        super(BaseNet_v5, self).__init__()
+        self.conv1 = nn.Conv2d(1, 32, 5,padding=2,stride=2)
+        self.conv2 = nn.Conv2d(32,64 , 3,padding=2,stride=2)
+        self.conv3 = nn.Conv2d(64,128 , 3,padding=2,stride=2)
+        #self.dropout = nn.Dropout(0.2)
+        self.aap  = nn.AdaptiveAvgPool2d(1)
+        self.fc1 = nn.Linear(128, 120)
+        self.fc2 = nn.Linear(120, 2)
 
     def forward(self, x):
-        x = self.relu(self.conv1(x))
-        x = self.pool(x)
-        x = self.relu(self.conv2(x))
-        x = self.pool(x)
-        x = self.relu(
-            self.conv3(x)
-        )  # num_examples x 120 x 1 x 1 --> num_examples x 120
-        #x = x.reshape(x.shape[0], -1)
-        x=x.view(-1, self.num_flat_features(x))
-        x = self.relu(self.linear1(x))
-        x = self.linear2(x)
+ 
+        x = F.max_pool2d(F.relu(self.conv1(x)), 2)
+        x = F.max_pool2d(F.relu(self.conv2(x)), 2)
+        x = F.max_pool2d(F.relu(self.conv3(x)), 2)
+        #x = self.dropout(x)
+        x = self.aap(x)
+        x = x.view(-1, self.num_flat_features(x))
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
         return x
     
     def num_flat_features(self, x):

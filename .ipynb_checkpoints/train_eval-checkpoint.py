@@ -25,16 +25,8 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import roc_auc_score
 import pandas as pd
 import sklearn 
-from tqdm import tqdm
-
-# In[2]:
-
-
 import loaders as l
 import models as m
-
-
-# In[6]:
 
 
 def calc_metrics_v1(net,loader,show,device) : 
@@ -43,12 +35,14 @@ def calc_metrics_v1(net,loader,show,device) :
     all_predicted=[]
     
     for i, data in enumerate(loader, 0):
-            # get the inputs; data is a list of [inputs, labels]
+            
             inputs, labels = data[0].to(device), data[1].to(device)
-            #data
+
             outputs = net(inputs)
+            
             y_pred_softmax = torch.log_softmax(outputs, dim = 1)
             _, y_pred_tags = torch.max(y_pred_softmax, dim = 1)
+            
             all_predicted.extend(np.array(y_pred_tags.cpu()))
             all_labels.extend(np.array(labels.cpu()))
     
@@ -68,7 +62,6 @@ def calc_metrics_v1(net,loader,show,device) :
     return f1s,prec,rec,cf_m,roc_aucc
 
 
-# In[9]:
 
 
 def train_v1(net,criterion,optimizer,epochs,train_loader,valid_loader,device):
@@ -85,35 +78,21 @@ def train_v1(net,criterion,optimizer,epochs,train_loader,valid_loader,device):
     for epoch in range(epochs):  # loop over the dataset multiple times
 
         running_loss = 0.0
-        for n_batch,batch in enumerate(train_loader) : 
-            # get the inputs; data is a list of [inputs, labels]
+        for n_batch,batch in enumerate(train_loader) :
+            
             inputs, labels = batch[0].to(device), batch[1].to(device)
-            #batch
 
-            # zero the parameter gradients
             optimizer.zero_grad()
 
-            # forward + backward + optimize
             outputs = net(inputs)
             loss = criterion(outputs, labels)
 
             loss.backward()
             optimizer.step()
 
-            #all_labels.extend(np.array(labels))
-
-            _, predicted = torch.max(outputs.data, 1)
-            #all_predicted.extend(np.array(predicted))
-
             running_loss += loss.item()
-            if n_batch % 2000 == 1999:    # print every 2000 mini-batches
+            if n_batch % 2000 == 1999:    # print every 2000 mini-batches so 1 epoch
 
-                #peut-être ça ne sert plus---------
-                y_pred_softmax = torch.log_softmax(outputs, dim = 1)
-                _, y_pred_tags = torch.max(y_pred_softmax, dim = 1)
-                outputs=np.array(y_pred_tags.cpu())
-                labels=np.array(labels.cpu())
-                #---------------------------------
                 all_losses.append(running_loss / n_batch)
                 f1,_,_,_,roc = calc_metrics_v1(net,valid_loader,False,device)#[0]
                 
@@ -123,6 +102,7 @@ def train_v1(net,criterion,optimizer,epochs,train_loader,valid_loader,device):
                     
                 all_f1scores.append(f1)
                 all_roc_auc.append(roc)
+                
                 print('[%2d, %2d] loss: %.3f f1_score on validation set : %.3f' %
                       (epoch + 1, n_batch + 1, running_loss / n_batch,f1))
 
@@ -130,56 +110,6 @@ def train_v1(net,criterion,optimizer,epochs,train_loader,valid_loader,device):
             
     
     return all_losses,all_accuracies,all_f1scores,all_roc_auc,best_params
-
-
-# In[ ]:
-
-
-
-
-
-# In[8]:
-
-
-
-'''
-train_dir = 'C:/Users/33783/Desktop/start_deep/start_deep/train_images'
-test_dir = 'C:/Users/33783/Desktop/start_deep/start_deep/test_images'
-
-transform = transforms.Compose(
-    [transforms.Grayscale(), 
-     transforms.ToTensor(), 
-     transforms.Normalize(mean=(0,),std=(1,))])
-
-valid_size = 0.2
-batch_size = 32
-
-train_loader,valid_loader,test_loader=l.make_all_loaders(train_dir,test_dir,transform,valid_size,batch_size)
-classes = ('noface','face')
-
-net = m.BaseNet()
-print(net)
-
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-
-epochs=2
-#Training
-
-all_labels,all_predicted,all_losses,all_accuracies,all_f1scores= train_v1(net,criterion,optimizer,epochs,train_loader,valid_loader)
-            
-plt.plot(all_losses, color='blue')
-plt.plot(all_f1scores, color='red')
-'''
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
 
 
 
